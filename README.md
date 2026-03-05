@@ -116,6 +116,29 @@ Each conversation is a JSON file in `content/conversations`:
 
 This keeps gallery viewing public while editing/upload remains private.
 
+## Fixing CMS Login Issues
+
+If `/admin` invite/login is failing, run this checklist in order:
+
+Step 1: Enable Identity in Netlify  
+Step 2: Set registration to Invite Only  
+Step 3: Enable Git Gateway  
+Step 4: Invite your email  
+Step 5: Visit `/admin` and login
+
+Troubleshooting:
+
+1. Verify `https://your-site.netlify.app/admin` loads and shows the login modal when clicking **Open Login**.
+2. Open `https://your-site.netlify.app/admin/debug` and confirm:
+   - Widget loaded = YES
+   - Identity initialized = YES
+   - `currentUser()` is present after login
+3. If widget is missing, check browser extensions/CSP blockers and confirm the site can load:
+   - `https://identity.netlify.com/v1/netlify-identity-widget.js`
+4. If login succeeds but publishing fails, confirm **Git Gateway** is enabled in Netlify.
+5. If invite was accepted but login still fails, resend invitation and confirm the email address matches exactly.
+6. Clear site storage/cookies for the Netlify domain and retry login.
+
 ## Voting Backend (Cloudflare Worker + D1)
 
 Preferred persistence is Cloudflare D1 (free tier friendly for low traffic).

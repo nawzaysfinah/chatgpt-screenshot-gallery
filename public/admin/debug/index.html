@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMS Identity Debug</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+
+      .wrap {
+        max-width: 760px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+
+      .card {
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .status {
+        margin: 0 0 10px;
+        font-size: 14px;
+      }
+
+      pre {
+        margin: 12px 0 0;
+        padding: 12px;
+        border-radius: 10px;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow-x: auto;
+        font-size: 12px;
+      }
+
+      .actions {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      button,
+      a {
+        border: 1px solid #0f766e;
+        background: #0f766e;
+        color: #ffffff;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 14px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      a.secondary {
+        border-color: #94a3b8;
+        background: #ffffff;
+        color: #0f172a;
+      }
+    </style>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>Netlify Identity Debug</h1>
+      <section class="card">
+        <p id="widget" class="status">Widget loaded: checking...</p>
+        <p id="identity" class="status">Identity initialized: checking...</p>
+        <p id="user" class="status">Current user: checking...</p>
+        <pre id="json">Loading...</pre>
+        <div class="actions">
+          <button id="login" type="button">Open Login</button>
+          <button id="logout" type="button">Logout</button>
+          <a class="secondary" href="/admin/">Back to CMS</a>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        var widgetEl = document.getElementById("widget");
+        var identityEl = document.getElementById("identity");
+        var userEl = document.getElementById("user");
+        var jsonEl = document.getElementById("json");
+        var loginEl = document.getElementById("login");
+        var logoutEl = document.getElementById("logout");
+
+        function setText(el, text) {
+          if (el) el.textContent = text;
+        }
+
+        function setJson(data) {
+          if (jsonEl) {
+            jsonEl.textContent = JSON.stringify(data, null, 2);
+          }
+        }
+
+        if (!window.netlifyIdentity) {
+          setText(widgetEl, "Widget loaded: NO");
+          setText(identityEl, "Identity initialized: NO");
+          setText(userEl, "Current user: unavailable");
+          setJson({ error: "Identity widget script did not load." });
+          return;
+        }
+
+        setText(widgetEl, "Widget loaded: YES");
+
+        window.netlifyIdentity.on("init", function () {
+          setText(identityEl, "Identity initialized: YES");
+          var user = window.netlifyIdentity.currentUser();
+          setText(userEl, "Current user: " + (user ? user.email || user.id || "present" : "none"));
+          setJson(user || { user: null });
+        });
+
+        window.netlifyIdentity.on("login", function (user) {
+          setText(userEl, "Current user: " + (user ? user.email || user.id || "present" : "none"));
+          setJson(user || { user: null });
+        });
+
+        window.netlifyIdentity.on("logout", function () {
+          setText(userEl, "Current user: none");
+          setJson({ user: null });
+        });
+
+        window.netlifyIdentity.on("error", function (err) {
+          setJson({ error: err && err.message ? err.message : "Unknown Identity error" });
+        });
+
+        if (loginEl) {
+          loginEl.addEventListener("click", function () {
+            window.netlifyIdentity.open("login");
+          });
+        }
+
+        if (logoutEl) {
+          logoutEl.addEventListener("click", function () {
+            window.netlifyIdentity.logout();
+          });
+        }
+
+        window.netlifyIdentity.init();
+      })();
+    </script>
+  </body>
+</html>

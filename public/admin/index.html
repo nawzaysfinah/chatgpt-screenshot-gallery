@@ -1,18 +1,159 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ChatGPT Screenshot Gallery CMS</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+
+      .cms-notice {
+        margin: 16px;
+        padding: 12px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        background: #ffffff;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .cms-notice strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .cms-error {
+        border-color: #fca5a5;
+        background: #fff1f2;
+      }
+
+      .cms-meta {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #475569;
+      }
+
+      .cms-actions {
+        margin-top: 10px;
+      }
+
+      .cms-actions button {
+        border: 1px solid #0f766e;
+        background: #0f766e;
+        color: #ffffff;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+
+      .cms-actions button:focus-visible {
+        outline: 2px solid #14b8a6;
+        outline-offset: 2px;
+      }
+    </style>
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   </head>
   <body>
-    <script src="https://unpkg.com/decap-cms@^3.8.1/dist/decap-cms.js"></script>
+    <div id="cms-status" class="cms-notice" role="status" aria-live="polite">
+      <strong>Loading CMS login...</strong>
+      Initializing Netlify Identity and Decap CMS.
+      <div class="cms-meta">If this hangs, open <a href="/admin/debug">/admin/debug</a> for diagnostics.</div>
+      <div class="cms-actions">
+        <button id="open-login" type="button">Open Login</button>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <script>
-      if (window.netlifyIdentity) {
+      (function () {
+        var statusEl = document.getElementById("cms-status");
+        var loginButton = document.getElementById("open-login");
+
+        function setStatus(title, details, isError) {
+          if (!statusEl) return;
+          statusEl.className = isError ? "cms-notice cms-error" : "cms-notice";
+          statusEl.innerHTML =
+            "<strong>" +
+            title +
+            "</strong>" +
+            details +
+            '<div class="cms-meta">Need help? See <a href="/admin/debug">/admin/debug</a>.</div>' +
+            '<div class="cms-actions"><button id="open-login" type="button">Open Login</button></div>';
+
+          var updatedButton = document.getElementById("open-login");
+          if (updatedButton) {
+            updatedButton.addEventListener("click", function () {
+              if (window.netlifyIdentity && window.netlifyIdentity.open) {
+                window.netlifyIdentity.open("login");
+              }
+            });
+          }
+        }
+
+        function showLoginFailure(extraMessage) {
+          setStatus(
+            "CMS login failed",
+            "Identity might not be enabled, Git Gateway might not be enabled, or your invite email may not be confirmed." +
+              (extraMessage ? " Details: " + extraMessage : ""),
+            true,
+          );
+        }
+
+        if (loginButton) {
+          loginButton.addEventListener("click", function () {
+            if (window.netlifyIdentity && window.netlifyIdentity.open) {
+              window.netlifyIdentity.open("login");
+            } else {
+              showLoginFailure("Netlify Identity widget did not load.");
+            }
+          });
+        }
+
+        if (!window.netlifyIdentity) {
+          showLoginFailure("Netlify Identity widget script is missing or blocked.");
+          return;
+        }
+
+        window.netlifyIdentity.on("error", function (error) {
+          showLoginFailure(error && error.message ? error.message : "Unknown Identity error.");
+        });
+
         window.netlifyIdentity.on("init", function (user) {
           if (!user) {
-            window.netlifyIdentity.on("login", function () {
+            setStatus(
+              "Ready to login",
+              "Use the login modal to continue. If your invite was just accepted, try logging in again from this page.",
+              false,
+            );
+            return;
+          }
+
+          setStatus("Logged in", "Authentication succeeded. Redirecting to CMS...", false);
+        });
+
+        window.netlifyIdentity.on("login", function () {
+          document.location.href = "/admin/";
+        });
+
+        window.netlifyIdentity.on("logout", function () {
+          setStatus("Logged out", "You have been signed out.", false);
+        });
+
+        window.netlifyIdentity.init();
+      })();
+    </script>
+    <script>
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", (user) => {
+          if (!user) {
+            window.netlifyIdentity.on("login", () => {
               document.location.href = "/admin/";
             });
           }

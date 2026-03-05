@@ -1,0 +1,17 @@
+{
+  "slug": "2026-03-05-my-chat-with-gpt",
+  "date": "2026-03-05",
+  "title": "My Chat With GPT",
+  "tags": ["teaching", "travel"],
+  "model": "gpt-5.2",
+  "topic": "AI",
+  "image": {
+    "src": "/uploads/2026-03-05__my-chat-with-gpt.png",
+    "promptCrop": {
+      "x": 0.08,
+      "y": 0.62,
+      "w": 0.84,
+      "h": 0.22
+    }
+  }
+}

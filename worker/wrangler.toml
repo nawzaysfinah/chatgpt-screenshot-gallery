@@ -1,0 +1,20 @@
+name = "chatgpt-screenshot-gallery-votes"
+main = "src/index.ts"
+compatibility_date = "2026-03-05"
+workers_dev = true
+
+[vars]
+# Comma-separated list of allowed front-end origins for CORS.
+# Example: "https://your-site.netlify.app,https://gallery.example.com"
+ALLOWED_ORIGINS = "https://your-site.netlify.app"
+RATE_LIMIT_PER_MINUTE = "120"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chatgpt-screenshot-gallery-votes"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Optional fallback storage (KV) if D1 is unavailable.
+# [[kv_namespaces]]
+# binding = "VOTES_KV"
+# id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

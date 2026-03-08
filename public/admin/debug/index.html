@@ -75,9 +75,11 @@
         <p id="widget" class="status">Widget loaded: checking...</p>
         <p id="identity" class="status">Identity initialized: checking...</p>
         <p id="user" class="status">Current user: checking...</p>
+        <p id="token" class="status">Invite token detected: checking...</p>
         <pre id="json">Loading...</pre>
         <div class="actions">
           <button id="login" type="button">Open Login</button>
+          <button id="signup" type="button">Open Signup</button>
           <button id="logout" type="button">Logout</button>
           <a class="secondary" href="/admin/">Back to CMS</a>
         </div>
@@ -89,9 +91,12 @@
         var widgetEl = document.getElementById("widget");
         var identityEl = document.getElementById("identity");
         var userEl = document.getElementById("user");
+        var tokenEl = document.getElementById("token");
         var jsonEl = document.getElementById("json");
         var loginEl = document.getElementById("login");
+        var signupEl = document.getElementById("signup");
         var logoutEl = document.getElementById("logout");
+        var tokenKeys = ["invite_token", "confirmation_token", "recovery_token", "email_change_token"];
 
         function setText(el, text) {
           if (el) el.textContent = text;
@@ -103,15 +108,25 @@
           }
         }
 
+        function hasToken() {
+          var hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+          var queryParams = new URLSearchParams(window.location.search);
+          return tokenKeys.some(function (key) {
+            return hashParams.get(key) || queryParams.get(key);
+          });
+        }
+
         if (!window.netlifyIdentity) {
           setText(widgetEl, "Widget loaded: NO");
           setText(identityEl, "Identity initialized: NO");
           setText(userEl, "Current user: unavailable");
+          setText(tokenEl, "Invite token detected: unknown");
           setJson({ error: "Identity widget script did not load." });
           return;
         }
 
         setText(widgetEl, "Widget loaded: YES");
+        setText(tokenEl, "Invite token detected: " + (hasToken() ? "YES" : "NO"));
 
         window.netlifyIdentity.on("init", function () {
           setText(identityEl, "Identity initialized: YES");
@@ -137,6 +152,12 @@
         if (loginEl) {
           loginEl.addEventListener("click", function () {
             window.netlifyIdentity.open("login");
+          });
+        }
+
+        if (signupEl) {
+          signupEl.addEventListener("click", function () {
+            window.netlifyIdentity.open("signup");
           });
         }
 

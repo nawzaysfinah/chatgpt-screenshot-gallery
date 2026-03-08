@@ -138,6 +138,24 @@ Troubleshooting:
 4. If login succeeds but publishing fails, confirm **Git Gateway** is enabled in Netlify.
 5. If invite was accepted but login still fails, resend invitation and confirm the email address matches exactly.
 6. Clear site storage/cookies for the Netlify domain and retry login.
+7. Open `https://your-site.netlify.app/admin/debug` and use **Open Signup** if an invite token is present.
+8. If the invite link lands on `/` instead of `/admin`, the app now auto-forwards token URLs to `/admin`.
+
+### Optional hard lock (recommended for single-owner uploads)
+
+You can add Basic Auth in front of `/admin` so only you can access the CMS pages:
+
+Set Netlify environment variables:
+- `ADMIN_BASIC_USER=your-admin-username`
+- `ADMIN_BASIC_PASSWORD=your-long-random-password`
+
+When these variables are set, `/admin` and `/admin/debug` require HTTP Basic Auth before Netlify Identity login.
+This is an additional security layer; Decap publishing still uses Netlify Identity + Git Gateway.
+
+### Alternative auth path (if Netlify Identity keeps failing)
+
+You can switch Decap to GitHub OAuth backend (`backend: github`) and restrict repo write access to your GitHub account only.
+This removes dependence on Netlify Identity/Git Gateway, but requires GitHub OAuth app setup.
 
 ## Voting Backend (Cloudflare Worker + D1)
 

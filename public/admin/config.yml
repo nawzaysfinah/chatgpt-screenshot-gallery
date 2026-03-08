@@ -5,9 +5,6 @@ backend:
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
-site_url: /
-display_url: /
-
 collections:
   - name: conversations
     label: Conversations

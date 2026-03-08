@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 
+import NetlifyIdentityTokenForwarder from "@/components/NetlifyIdentityTokenForwarder";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} min-h-screen bg-slate-50 text-slate-900 antialiased`}>
+        <NetlifyIdentityTokenForwarder />
         {children}
         <Script
           src="https://identity.netlify.com/v1/netlify-identity-widget.js"

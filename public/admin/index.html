@@ -40,9 +40,13 @@
 
       .cms-actions {
         margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
-      .cms-actions button {
+      .cms-actions button,
+      .cms-actions a {
         border: 1px solid #0f766e;
         background: #0f766e;
         color: #ffffff;
@@ -51,9 +55,17 @@
         font-weight: 600;
         padding: 8px 14px;
         cursor: pointer;
+        text-decoration: none;
       }
 
-      .cms-actions button:focus-visible {
+      .cms-actions a.secondary {
+        border-color: #94a3b8;
+        background: #ffffff;
+        color: #0f172a;
+      }
+
+      .cms-actions button:focus-visible,
+      .cms-actions a:focus-visible {
         outline: 2px solid #14b8a6;
         outline-offset: 2px;
       }
@@ -67,6 +79,7 @@
       <div class="cms-meta">If this hangs, open <a href="/admin/debug">/admin/debug</a> for diagnostics.</div>
       <div class="cms-actions">
         <button id="open-login" type="button">Open Login</button>
+        <a class="secondary" href="/admin/debug">Open Debug</a>
       </div>
     </div>
 
@@ -75,9 +88,27 @@
       (function () {
         var statusEl = document.getElementById("cms-status");
         var loginButton = document.getElementById("open-login");
+        var tokenKeys = ["invite_token", "confirmation_token", "recovery_token", "email_change_token"];
+
+        function hasNetlifyToken() {
+          var hash = window.location.hash ? window.location.hash.replace(/^#/, "") : "";
+          var query = window.location.search ? window.location.search.replace(/^\?/, "") : "";
+          var hashParams = new URLSearchParams(hash);
+          var queryParams = new URLSearchParams(query);
+
+          for (var i = 0; i < tokenKeys.length; i += 1) {
+            var key = tokenKeys[i];
+            if (hashParams.get(key) || queryParams.get(key)) {
+              return true;
+            }
+          }
+
+          return false;
+        }
 
         function setStatus(title, details, isError) {
           if (!statusEl) return;
+
           statusEl.className = isError ? "cms-notice cms-error" : "cms-notice";
           statusEl.innerHTML =
             "<strong>" +
@@ -85,7 +116,10 @@
             "</strong>" +
             details +
             '<div class="cms-meta">Need help? See <a href="/admin/debug">/admin/debug</a>.</div>' +
-            '<div class="cms-actions"><button id="open-login" type="button">Open Login</button></div>';
+            '<div class="cms-actions">' +
+            '<button id="open-login" type="button">Open Login</button>' +
+            '<a class="secondary" href="/admin/debug">Open Debug</a>' +
+            "</div>";
 
           var updatedButton = document.getElementById("open-login");
           if (updatedButton) {
@@ -98,22 +132,30 @@
         }
 
         function showLoginFailure(extraMessage) {
-          setStatus(
-            "CMS login failed",
-            "Identity might not be enabled, Git Gateway might not be enabled, or your invite email may not be confirmed." +
-              (extraMessage ? " Details: " + extraMessage : ""),
-            true,
-          );
+          var details =
+            "Identity might not be enabled, Git Gateway might not be enabled, or your invite email may not be confirmed.";
+          if (extraMessage) {
+            details += " Details: " + extraMessage;
+          }
+
+          setStatus("CMS login failed", details, true);
+        }
+
+        function openLogin() {
+          if (!window.netlifyIdentity || !window.netlifyIdentity.open) {
+            showLoginFailure("Netlify Identity widget did not load.");
+            return;
+          }
+
+          if (hasNetlifyToken()) {
+            window.netlifyIdentity.open("signup");
+          } else {
+            window.netlifyIdentity.open("login");
+          }
         }
 
         if (loginButton) {
-          loginButton.addEventListener("click", function () {
-            if (window.netlifyIdentity && window.netlifyIdentity.open) {
-              window.netlifyIdentity.open("login");
-            } else {
-              showLoginFailure("Netlify Identity widget did not load.");
-            }
-          });
+          loginButton.addEventListener("click", openLogin);
         }
 
         if (!window.netlifyIdentity) {
@@ -126,16 +168,26 @@
         });
 
         window.netlifyIdentity.on("init", function (user) {
-          if (!user) {
-            setStatus(
-              "Ready to login",
-              "Use the login modal to continue. If your invite was just accepted, try logging in again from this page.",
-              false,
-            );
+          if (user) {
+            setStatus("Logged in", "Authentication succeeded. Redirecting to CMS...", false);
             return;
           }
 
-          setStatus("Logged in", "Authentication succeeded. Redirecting to CMS...", false);
+          if (hasNetlifyToken()) {
+            setStatus(
+              "Complete account setup",
+              "Invite or confirmation token detected. Complete signup/login in the modal, then you will return to CMS.",
+              false,
+            );
+            openLogin();
+            return;
+          }
+
+          setStatus(
+            "Ready to login",
+            "Use the login modal to continue. If your invite was just accepted, open the invite link again or use Open Login.",
+            false,
+          );
         });
 
         window.netlifyIdentity.on("login", function () {
@@ -148,17 +200,6 @@
 
         window.netlifyIdentity.init();
       })();
-    </script>
-    <script>
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", (user) => {
-          if (!user) {
-            window.netlifyIdentity.on("login", () => {
-              document.location.href = "/admin/";
-            });
-          }
-        });
-      }
     </script>
   </body>
 </html>

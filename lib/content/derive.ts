@@ -19,7 +19,7 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-function toTitleCase(input: string): string {
+export function toTitleCase(input: string): string {
   return input
     .split(/\s+/)
     .filter(Boolean)
@@ -27,7 +27,7 @@ function toTitleCase(input: string): string {
     .join(" ");
 }
 
-function kebabCase(input: string): string {
+export function kebabCase(input: string): string {
   return input
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -49,7 +49,7 @@ function isDateString(value?: string): value is string {
   );
 }
 
-function deriveFromStem(stem: string): FilenameDerived {
+export function deriveFromStem(stem: string): FilenameDerived {
   const match = stem.match(DATE_PREFIX);
   if (!match) {
     return {};
@@ -96,14 +96,26 @@ function normalizeCrop(promptCrop?: Partial<PromptCrop>): PromptCrop {
   };
 }
 
-function normalizeImageSrc(src?: string, fileStem?: string): string {
-  const cleanSrc = src?.trim();
-  if (cleanSrc) {
-    return cleanSrc.startsWith("/") ? cleanSrc : `/${cleanSrc}`;
+function isAbsoluteUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+function normalizeImageSource(
+  image: ConversationRecord["image"],
+  fileStem?: string,
+): { src: string; url?: string } {
+  const candidate = image?.url?.trim() || image?.src?.trim();
+  if (candidate) {
+    if (isAbsoluteUrl(candidate)) {
+      return { src: candidate, url: candidate };
+    }
+
+    const normalized = candidate.startsWith("/") ? candidate : `/${candidate}`;
+    return { src: normalized };
   }
 
   const fallbackStem = fileStem ? kebabCase(fileStem) : "conversation";
-  return `/uploads/${fallbackStem}.png`;
+  return { src: `/uploads/${fallbackStem}.png` };
 }
 
 export function normalizeConversation(
@@ -112,7 +124,8 @@ export function normalizeConversation(
 ): Conversation {
   const sourceBaseName = path.basename(sourceFile, path.extname(sourceFile));
   const fromJsonName = deriveFromStem(sourceBaseName);
-  const imageSrc = normalizeImageSrc(record.image?.src, sourceBaseName);
+  const imageSource = normalizeImageSource(record.image, sourceBaseName);
+  const imageSrc = imageSource.src;
   const imageBaseName = path.basename(imageSrc, path.extname(imageSrc));
   const fromImageName = deriveFromStem(imageBaseName);
 
@@ -139,6 +152,7 @@ export function normalizeConversation(
     topic: record.topic?.trim() || undefined,
     image: {
       src: imageSrc,
+      url: imageSource.url,
       promptCrop: normalizeCrop(record.image?.promptCrop),
     },
     sourceFile,

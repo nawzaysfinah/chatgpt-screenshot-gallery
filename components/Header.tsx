@@ -18,7 +18,7 @@ export default function Header({ search, sort, onSearchChange, onSortChange }: H
             Public Gallery
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            ChatGPT Screenshot Gallery
+            Dialogue Diaries
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Browse full conversation screenshots, filter quickly, and vote on useful chats.

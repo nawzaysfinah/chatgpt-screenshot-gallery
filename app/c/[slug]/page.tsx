@@ -4,18 +4,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import VoteWidget from "@/components/VoteWidget";
-import { getAllConversations, getConversationBySlug } from "@/lib/content/load";
+import { getConversationBySlug } from "@/lib/content/load";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
-
-export async function generateStaticParams() {
-  const conversations = await getAllConversations();
-  return conversations.map((conversation) => ({ slug: conversation.slug }));
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -28,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${conversation.title} | ChatGPT Screenshot Gallery`,
+    title: `${conversation.title} | Dialogue Diaries`,
     description: `Full screenshot for ${conversation.title} on ${conversation.date}.`,
   };
 }

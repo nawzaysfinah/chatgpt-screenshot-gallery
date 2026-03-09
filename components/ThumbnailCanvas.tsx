@@ -38,6 +38,7 @@ export default function ThumbnailCanvas({ src, crop, alt }: ThumbnailCanvasProps
 
     const image = new Image();
     image.decoding = "async";
+    image.crossOrigin = "anonymous";
     image.src = src;
 
     image.onload = () => {
@@ -70,7 +71,13 @@ export default function ThumbnailCanvas({ src, crop, alt }: ThumbnailCanvasProps
       }
 
       context.drawImage(image, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+      let dataUrl: string;
+      try {
+        dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+      } catch {
+        setReady(true);
+        return;
+      }
 
       try {
         window.localStorage.setItem(cacheKey, dataUrl);

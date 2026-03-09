@@ -6,7 +6,8 @@ export type PromptCrop = {
 };
 
 export type ConversationImage = {
-  src: string;
+  src?: string;
+  url?: string;
   promptCrop?: Partial<PromptCrop>;
 };
 
@@ -29,6 +30,7 @@ export type Conversation = {
   topic?: string;
   image: {
     src: string;
+    url?: string;
     promptCrop: PromptCrop;
   };
   sourceFile: string;

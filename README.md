@@ -1,87 +1,101 @@
-# ChatGPT Screenshot Gallery
+# Dialogue Diaries
 
-Production-ready Next.js website for publishing ChatGPT conversation screenshots publicly, with private uploads/editing via Decap CMS + Netlify Identity/Git Gateway, and persistent Reddit-style voting via Cloudflare Worker + D1.
+Dialogue Diaries is a Next.js gallery for long ChatGPT conversation screenshots.
 
-## Features
+- Public gallery: `/`
+- Conversation detail pages: `/c/[slug]`
+- Private uploader: `/admin`
 
-- Public gallery at `/` with search + sorting (`Newest`, `Oldest`, `Top`).
-- Conversation detail pages at `/c/[slug]` with full screenshot and voting.
-- Prompt-region thumbnail crops rendered client-side with `<canvas>` and cached in `localStorage`.
-- Date-first display from `YYYY-MM-DD` filename prefix.
-- Optional metadata (`title`, `tags`, `model`, `topic`) with runtime fallback auto-derivation from filenames.
-- Private CMS at `/admin` (Decap CMS + Netlify Identity + Git Gateway).
-- Persistent upvote/downvote backend with one-vote-per-user-per-conversation logic.
+The project is now oriented around Vercel for hosting and route handlers, plus Supabase for metadata and image storage. The vote service remains separate and still works through the existing vote API configuration.
 
-## Project Structure
+## Stack
 
-- `app` Next.js App Router pages
-- `components` UI components (`Header`, `Card`, `VoteWidget`, `ThumbnailCanvas`)
-- `lib/content` content loading + metadata derivation from JSON/files
-- `lib/votes` vote API client + local mock fallback
-- `content/conversations` CMS-managed conversation JSON records
-- `public/uploads` screenshot assets
-- `public/admin` Decap CMS files
-- `worker` Cloudflare Worker + D1 backend
+- Next.js App Router + TypeScript + Tailwind
+- Vercel route handlers under `app/api/admin/*`
+- Supabase Postgres for conversation metadata
+- Supabase Storage for screenshots
+- Shared admin password stored in Vercel environment variables
 
-## Local Development
+## How it works
 
-1. Install dependencies:
+### Public site
+
+- `lib/content/load.ts` reads from Supabase when Supabase env vars are configured.
+- If Supabase is not configured, it falls back to `content/conversations/*.json`.
+- The gallery UI and voting UI are unchanged.
+
+### Private admin
+
+- `/admin` uses a shared password.
+- `POST /api/admin/login` verifies `ADMIN_PASSWORD` and sets an `HttpOnly` cookie.
+- `POST /api/admin/upload-sign` creates a signed Supabase Storage upload URL.
+- The browser uploads the image directly to Supabase Storage.
+- `POST /api/admin/metadata` upserts the conversation record into Supabase.
+
+## Supabase setup
+
+1. Create a Supabase project.
+2. In Supabase SQL editor, run [`supabase/schema.sql`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/supabase/schema.sql).
+3. In Supabase project settings, copy:
+   - Project URL
+   - anon public key
+   - service role key
+4. Keep the `conversation-screenshots` bucket public so the gallery can render images directly.
+
+## Required environment variables
+
+Set these in Vercel:
+
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET`
+
+Optional:
+
+- `NEXT_PUBLIC_VOTE_API_BASE`
+
+If you do not set `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET`, the app defaults to `conversation-screenshots`.
+
+## Vercel deployment
+
+1. Push the repo to GitHub.
+2. Import the repo into Vercel.
+3. Set the environment variables listed above.
+4. Deploy.
+
+No `netlify.toml` or Netlify Functions are required anymore. The app uses standard Next.js route handlers, which Vercel supports directly.
+
+## Local development
 
 ```bash
 npm install
-```
-
-2. Run Next.js dev server:
-
-```bash
 npm run dev
 ```
 
-3. Open:
-- `http://localhost:3000` (public site)
-- `http://localhost:3000/admin` (Decap CMS UI)
+Open:
 
-If `NEXT_PUBLIC_VOTE_API_BASE` is not set, voting automatically uses a local in-memory mock for UI development.
+- `http://localhost:3000`
+- `http://localhost:3000/admin`
 
-## Screenshot Naming Convention
+Local notes:
 
-Use this filename format for uploads:
+- If Supabase env vars are missing, the public gallery falls back to local JSON content.
+- The admin upload flow requires Supabase env vars because uploads and metadata writes now target Supabase directly.
 
-`YYYY-MM-DD__optional-title.png`
+## Admin workflow
 
-Examples:
-- `2026-03-05__my-chat-with-gpt.png`
-- `2026-03-06__python-debug-session.png`
+1. Visit `/admin`.
+2. Enter the shared admin password.
+3. Choose a screenshot file named like `YYYY-MM-DD__optional-title.png`.
+4. Upload the file to Supabase Storage.
+5. Review the auto-filled date/title/slug.
+6. Adjust tags, model, topic, and `promptCrop`.
+7. Save metadata.
 
-The app derives fallback metadata from this pattern:
-- `date` from `YYYY-MM-DD`
-- `title` from `optional-title`
-- `slug` from date + title
-
-## Capturing Long/Full Screenshots
-
-- Chrome (desktop):
-1. Open DevTools.
-2. Run Command Menu (`Cmd/Ctrl + Shift + P`).
-3. Use `Capture full size screenshot`.
-
-- Safari (desktop):
-1. Print page to PDF (`File > Export as PDF`).
-2. Convert PDF page to PNG if needed before upload.
-
-- iOS:
-1. Take screenshot.
-2. Tap preview.
-3. Use `Full Page` when available.
-4. Export/save and convert to PNG if required.
-
-- Android:
-1. Use built-in `Scrolling screenshot` or `Capture more` after a normal screenshot.
-2. Save as image and upload.
-
-## Content Model
-
-Each conversation is a JSON file in `content/conversations`:
+## Metadata format
 
 ```json
 {
@@ -89,158 +103,26 @@ Each conversation is a JSON file in `content/conversations`:
   "date": "2026-03-05",
   "title": "My Chat With GPT",
   "tags": ["teaching", "travel"],
-  "model": "gpt-5.2",
+  "model": "gpt-5",
   "topic": "AI",
   "image": {
-    "src": "/uploads/2026-03-05__my-chat-with-gpt.png",
+    "url": "https://your-project.supabase.co/storage/v1/object/public/conversation-screenshots/screenshots/2026-03-05-my-chat-with-gpt.png",
     "promptCrop": { "x": 0.08, "y": 0.62, "w": 0.84, "h": 0.22 }
   }
 }
 ```
 
-`promptCrop` uses normalized values (`0..1`) and controls thumbnail extraction.
+The gallery accepts both the new `image.url` shape from Supabase and older `image.src` records.
 
-## Netlify Deploy + Private CMS Setup
+## Files that matter
 
-1. Push this project to GitHub.
-2. In Netlify, create a new site from that GitHub repo.
-3. Build settings:
-- Build command: `npm run build`
-- Publish directory: `.next`
-4. Deploy site.
-5. In Netlify dashboard, enable **Identity**.
-6. Under Identity settings, set registration to **Invite only**.
-7. Enable **Git Gateway**.
-8. Invite your own account email in Netlify Identity.
-9. Visit `/admin`, log in, and upload/update records.
+- [`app/admin/page.tsx`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/admin/page.tsx)
+- [`app/api/admin/login/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/login/route.ts)
+- [`app/api/admin/logout/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/logout/route.ts)
+- [`app/api/admin/session/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/session/route.ts)
+- [`app/api/admin/upload-sign/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/upload-sign/route.ts)
+- [`app/api/admin/metadata/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/metadata/route.ts)
+- [`lib/content/load.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/lib/content/load.ts)
+- [`lib/supabase/server.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/lib/supabase/server.ts)
+- [`supabase/schema.sql`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/supabase/schema.sql)
 
-This keeps gallery viewing public while editing/upload remains private.
-
-## Fixing CMS Login Issues
-
-If `/admin` invite/login is failing, run this checklist in order:
-
-Step 1: Enable Identity in Netlify  
-Step 2: Set registration to Invite Only  
-Step 3: Enable Git Gateway  
-Step 4: Invite your email  
-Step 5: Visit `/admin` and login
-
-Troubleshooting:
-
-1. Verify `https://your-site.netlify.app/admin` loads and shows the login modal when clicking **Open Login**.
-2. Open `https://your-site.netlify.app/admin/debug` and confirm:
-   - Widget loaded = YES
-   - Identity initialized = YES
-   - `currentUser()` is present after login
-3. If widget is missing, check browser extensions/CSP blockers and confirm the site can load:
-   - `https://identity.netlify.com/v1/netlify-identity-widget.js`
-4. If login succeeds but publishing fails, confirm **Git Gateway** is enabled in Netlify.
-5. If invite was accepted but login still fails, resend invitation and confirm the email address matches exactly.
-6. Clear site storage/cookies for the Netlify domain and retry login.
-7. Open `https://your-site.netlify.app/admin/debug` and use **Open Signup** if an invite token is present.
-8. If the invite link lands on `/` instead of `/admin`, the app now auto-forwards token URLs to `/admin`.
-
-### Optional hard lock (recommended for single-owner uploads)
-
-You can add Basic Auth in front of `/admin` so only you can access the CMS pages:
-
-Set Netlify environment variables:
-- `ADMIN_BASIC_USER=your-admin-username`
-- `ADMIN_BASIC_PASSWORD=your-long-random-password`
-
-When these variables are set, `/admin` and `/admin/debug` require HTTP Basic Auth before Netlify Identity login.
-This is an additional security layer; Decap publishing still uses Netlify Identity + Git Gateway.
-
-### Alternative auth path (if Netlify Identity keeps failing)
-
-You can switch Decap to GitHub OAuth backend (`backend: github`) and restrict repo write access to your GitHub account only.
-This removes dependence on Netlify Identity/Git Gateway, but requires GitHub OAuth app setup.
-
-## Voting Backend (Cloudflare Worker + D1)
-
-Preferred persistence is Cloudflare D1 (free tier friendly for low traffic).
-
-### 1) Set up worker project
-
-```bash
-cd worker
-npm install
-npx wrangler login
-```
-
-### 2) Create D1 database
-
-```bash
-npx wrangler d1 create chatgpt-screenshot-gallery-votes
-```
-
-Copy the returned `database_id` into `worker/wrangler.toml` (`[[d1_databases]]`).
-
-### 3) Apply schema migrations
-
-```bash
-npx wrangler d1 migrations apply chatgpt-screenshot-gallery-votes --remote
-```
-
-### 4) Configure CORS allowlist
-
-Set `ALLOWED_ORIGINS` in `worker/wrangler.toml` (or dashboard) to your Netlify URL(s), e.g.:
-
-`https://your-site.netlify.app,https://gallery.example.com`
-
-### 5) Deploy worker
-
-```bash
-npx wrangler deploy
-```
-
-### 6) Connect Next.js frontend to worker
-
-In Netlify site environment variables, set:
-
-`NEXT_PUBLIC_VOTE_API_BASE=https://your-worker-name.your-subdomain.workers.dev`
-
-Redeploy Netlify after setting the variable.
-
-### Optional fallback if D1 is unavailable
-
-You can bind Cloudflare KV (`VOTES_KV`) and the same worker will fallback automatically.
-Use this only when D1 is not available; KV score updates are not strictly transactional under burst traffic.
-
-## Vote API Contract
-
-- `POST /vote` body: `{ slug, userId, value }` where `value` is `-1`, `0`, or `1`
-- `GET /score?slug=...&userId=...`
-- `GET /batch-scores?slugs=a,b,c&userId=...`
-- `POST /batch-scores` body: `{ slugs: string[], userId?: string }`
-
-The frontend generates/stores a stable anonymous `userId` in `localStorage`.
-
-## Adjusting Prompt Crop
-
-If a thumbnail looks wrong:
-
-1. Open the conversation JSON in Decap CMS (`/admin`) or edit the file directly.
-2. Adjust `image.promptCrop` values:
-- `x` (left offset)
-- `y` (top offset)
-- `w` (width)
-- `h` (height)
-3. Save/publish.
-4. Refresh the gallery page.
-
-Tip: defaults are tuned for long ChatGPT screenshots; most fixes involve `y` and `h`.
-
-## Accessibility + UX Notes
-
-- Keyboard-focus styling for controls.
-- Labeled search, sort, and vote actions.
-- Vote score updates use live region semantics.
-
-## Seed Content Included
-
-- `content/conversations/2026-03-05_my-chat-with-gpt.json`
-- `content/conversations/2026-02-20_trip-planning-assistant.json`
-- `public/uploads/2026-03-05__my-chat-with-gpt.png`
-- `public/uploads/2026-02-20__trip-planning-assistant.png`

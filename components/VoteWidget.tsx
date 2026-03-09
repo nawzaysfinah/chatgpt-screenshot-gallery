@@ -99,7 +99,7 @@ export default function VoteWidget({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1 py-1">
+      <div className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950 px-1 py-1">
         <button
           type="button"
           aria-label="Upvote"
@@ -107,8 +107,8 @@ export default function VoteWidget({
           onClick={() => void submitVote(1)}
           className={`${buttonSize} rounded-full font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 ${
             userVote === 1
-              ? "bg-emerald-100 text-emerald-700"
-              : "text-slate-600 hover:bg-slate-100"
+              ? "bg-emerald-950 text-emerald-300"
+              : "text-slate-400 hover:bg-slate-800"
           } ${isPending ? "cursor-not-allowed opacity-60" : ""}`}
         >
           ▲
@@ -117,7 +117,7 @@ export default function VoteWidget({
         <span
           aria-live="polite"
           aria-label={`Score ${score}`}
-          className={`min-w-8 text-center font-semibold text-slate-900 ${scoreSize}`}
+          className={`min-w-8 text-center font-semibold text-slate-100 ${scoreSize}`}
         >
           {score}
         </span>
@@ -129,15 +129,15 @@ export default function VoteWidget({
           onClick={() => void submitVote(-1)}
           className={`${buttonSize} rounded-full font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 ${
             userVote === -1
-              ? "bg-rose-100 text-rose-700"
-              : "text-slate-600 hover:bg-slate-100"
+              ? "bg-rose-950 text-rose-300"
+              : "text-slate-400 hover:bg-slate-800"
           } ${isPending ? "cursor-not-allowed opacity-60" : ""}`}
         >
           ▼
         </button>
       </div>
 
-      {error ? <p className="text-xs text-rose-600">{error}</p> : null}
+      {error ? <p className="text-xs text-rose-400">{error}</p> : null}
     </div>
   );
 }

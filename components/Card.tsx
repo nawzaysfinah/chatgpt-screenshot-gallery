@@ -29,13 +29,13 @@ export default function Card({ conversation, score, userVote, onVoteChange }: Ca
   const tags = tagList(conversation);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md">
+    <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-950/70 shadow-[0_16px_56px_rgba(2,6,23,0.38)] transition hover:border-teal-500/50 hover:shadow-[0_20px_72px_rgba(13,148,136,0.16)]">
       <Link
         href={`/c/${conversation.slug}`}
         className="block p-4"
         aria-label={`Open conversation ${conversation.title}`}
       >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
           {conversation.date}
         </p>
 
@@ -45,17 +45,17 @@ export default function Card({ conversation, score, userVote, onVoteChange }: Ca
           alt={`Prompt thumbnail for ${conversation.title}`}
         />
 
-        <h2 className="mt-3 line-clamp-2 text-lg font-semibold text-slate-900 transition group-hover:text-emerald-700">
+        <h2 className="mt-4 line-clamp-2 text-lg font-semibold text-slate-100 transition group-hover:text-teal-300">
           {conversation.title}
         </h2>
       </Link>
 
-      <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-200 px-4 py-3">
+      <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-800/80 px-4 py-3">
         <div className="flex min-h-[2.25rem] flex-wrap items-center gap-2">
           {tags.slice(0, 4).map((tag) => (
             <span
               key={`${conversation.slug}-${tag}`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600"
+              className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-300"
             >
               {tag}
             </span>

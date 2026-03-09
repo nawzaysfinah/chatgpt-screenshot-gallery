@@ -42,16 +42,16 @@ export default async function ConversationPage({ params }: PageProps) {
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <Link
         href="/"
-        className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+        className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
       >
         ← Back to gallery
       </Link>
 
-      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+      <section className="mt-5 rounded-3xl border border-slate-800/80 bg-slate-950/75 p-5 shadow-[0_20px_80px_rgba(2,6,23,0.45)] sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
           {conversation.date}
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-100 sm:text-3xl">
           {conversation.title}
         </h1>
 
@@ -60,18 +60,18 @@ export default async function ConversationPage({ params }: PageProps) {
             {conversation.tags.map((tag) => (
               <span
                 key={`${conversation.slug}-${tag}`}
-                className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600"
+                className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-300"
               >
                 {tag}
               </span>
             ))}
             {conversation.topic ? (
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+              <span className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-300">
                 {conversation.topic}
               </span>
             ) : null}
             {conversation.model ? (
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+              <span className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-300">
                 {conversation.model}
               </span>
             ) : null}
@@ -81,12 +81,12 @@ export default async function ConversationPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+      <section className="mt-5 rounded-3xl border border-slate-800/80 bg-slate-950/75 p-3 shadow-[0_20px_80px_rgba(2,6,23,0.45)] sm:p-4">
         <a
           href={conversation.image.src}
           target="_blank"
           rel="noopener noreferrer"
-          className="block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+          className="block overflow-hidden rounded-2xl border border-slate-800 bg-slate-900"
           aria-label="Open full screenshot in new tab"
         >
           <Image

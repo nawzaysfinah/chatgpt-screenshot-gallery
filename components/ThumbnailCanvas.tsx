@@ -11,15 +11,36 @@ type ThumbnailCanvasProps = {
   alt: string;
 };
 
-function cacheKeyFor(src: string, crop: PromptCrop): string {
-  return `csg:thumb:${src}:${JSON.stringify(crop)}`;
+function cacheKeyFor(src: string): string {
+  return `csg:thumb:v2:${src}`;
+}
+
+function resolvePreviewBounds(naturalWidth: number, naturalHeight: number) {
+  if (naturalHeight <= naturalWidth) {
+    const size = naturalHeight;
+    return {
+      sx: Math.floor((naturalWidth - size) / 2),
+      sy: 0,
+      sw: size,
+      sh: size,
+    };
+  }
+
+  const size = naturalWidth;
+  const topOffset = Math.min(Math.floor(naturalHeight * 0.1), Math.max(0, naturalHeight - size));
+  return {
+    sx: 0,
+    sy: topOffset,
+    sw: size,
+    sh: size,
+  };
 }
 
 export default function ThumbnailCanvas({ src, crop, alt }: ThumbnailCanvasProps) {
   const [thumbDataUrl, setThumbDataUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  const cacheKey = useMemo(() => cacheKeyFor(src, crop), [src, crop]);
+  const cacheKey = useMemo(() => cacheKeyFor(src), [src]);
 
   useEffect(() => {
     let active = true;
@@ -53,13 +74,10 @@ export default function ThumbnailCanvas({ src, crop, alt }: ThumbnailCanvasProps
         return;
       }
 
-      const sx = Math.floor(naturalWidth * crop.x);
-      const sy = Math.floor(naturalHeight * crop.y);
-      const sw = Math.max(1, Math.floor(naturalWidth * crop.w));
-      const sh = Math.max(1, Math.floor(naturalHeight * crop.h));
+      const { sx, sy, sw, sh } = resolvePreviewBounds(naturalWidth, naturalHeight);
 
       const outputWidth = 720;
-      const outputHeight = Math.max(240, Math.round(outputWidth * (sh / sw)));
+      const outputHeight = outputWidth;
       const canvas = document.createElement("canvas");
       canvas.width = outputWidth;
       canvas.height = outputHeight;
@@ -101,15 +119,15 @@ export default function ThumbnailCanvas({ src, crop, alt }: ThumbnailCanvasProps
   }, [cacheKey, crop, src]);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-      {!ready ? <div className="h-44 animate-pulse bg-slate-200" aria-hidden="true" /> : null}
+    <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+      {!ready ? <div className="aspect-square animate-pulse bg-slate-800" aria-hidden="true" /> : null}
       <NextImage
         src={thumbDataUrl ?? src}
         alt={alt}
         width={720}
-        height={240}
+        height={720}
         unoptimized
-        className={`h-44 w-full object-cover transition ${ready ? "opacity-100" : "opacity-0"}`}
+        className={`aspect-square w-full object-cover object-top transition ${ready ? "opacity-100" : "opacity-0"}`}
       />
     </div>
   );

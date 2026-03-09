@@ -98,18 +98,18 @@ export default function GalleryClient({ conversations }: GalleryClientProps) {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <Header search={search} sort={sort} onSearchChange={setSearch} onSortChange={setSort} />
 
-      <div className="mb-5 flex items-center justify-between gap-3 text-sm text-slate-600">
+      <div className="mb-5 flex items-center justify-between gap-3 text-sm text-slate-400">
         <p>
           {visibleConversations.length} conversation
           {visibleConversations.length === 1 ? "" : "s"}
         </p>
-        {voteError ? <p className="text-amber-700">{voteError}</p> : null}
+        {voteError ? <p className="text-amber-400">{voteError}</p> : null}
       </div>
 
       {visibleConversations.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-          <p className="text-base font-medium text-slate-900">No conversations match your search.</p>
-          <p className="mt-2 text-sm text-slate-600">Try a different keyword, model, or tag.</p>
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-10 text-center shadow-[0_16px_56px_rgba(2,6,23,0.38)]">
+          <p className="text-base font-medium text-slate-100">No conversations match your search.</p>
+          <p className="mt-2 text-sm text-slate-400">Try a different keyword, model, or tag.</p>
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

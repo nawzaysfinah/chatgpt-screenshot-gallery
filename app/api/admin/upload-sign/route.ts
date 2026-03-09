@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getSessionTokenFromCookieHeader, verifySessionToken } from "@/lib/admin/session";
+import { authenticateRequest } from "@/lib/supabase/auth";
 import { createSupabaseServerClient, supabaseBucket } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -30,15 +30,15 @@ function normalizeExtension(input: unknown): string {
 }
 
 export async function POST(request: Request) {
-  const isAuthenticated = verifySessionToken(getSessionTokenFromCookieHeader(request.headers.get("cookie")));
-  if (!isAuthenticated) {
+  const user = await authenticateRequest(request);
+  if (!user) {
     return NextResponse.json({ ok: false, message: "Unauthorized." }, { status: 401 });
   }
 
   const body = (await request.json().catch(() => null)) as UploadBody | null;
   const slug = normalizeSlug(body?.slug);
   const extension = normalizeExtension(body?.extension);
-  const storagePath = `screenshots/${slug}.${extension}`;
+  const storagePath = `users/${user.id}/screenshots/${slug}.${extension}`;
 
   const supabase = createSupabaseServerClient();
   const bucket = supabaseBucket();
@@ -62,4 +62,3 @@ export async function POST(request: Request) {
     publicUrl: publicUrlData.publicUrl,
   });
 }
-

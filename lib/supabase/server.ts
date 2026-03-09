@@ -15,6 +15,8 @@ export type Database = {
           topic: string | null;
           image_url: string;
           prompt_crop: Json | null;
+          owner_id: string | null;
+          owner_email: string | null;
           created_at: string | null;
           updated_at: string | null;
         };
@@ -27,6 +29,8 @@ export type Database = {
           topic?: string | null;
           image_url: string;
           prompt_crop?: Json | null;
+          owner_id?: string | null;
+          owner_email?: string | null;
         };
         Update: {
           slug?: string;
@@ -37,6 +41,8 @@ export type Database = {
           topic?: string | null;
           image_url?: string;
           prompt_crop?: Json | null;
+          owner_id?: string | null;
+          owner_email?: string | null;
         };
         Relationships: [];
       };

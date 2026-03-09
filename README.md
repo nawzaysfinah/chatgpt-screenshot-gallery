@@ -5,6 +5,7 @@ Dialogue Diaries is a Next.js gallery for long ChatGPT conversation screenshots.
 - Public gallery: `/`
 - Conversation detail pages: `/c/[slug]`
 - Private uploader: `/admin`
+- Owner dashboard: `/my-posts`
 
 The project is now oriented around Vercel for hosting and route handlers, plus Supabase for metadata and image storage. The vote service remains separate and still works through the existing vote API configuration.
 
@@ -14,7 +15,7 @@ The project is now oriented around Vercel for hosting and route handlers, plus S
 - Vercel route handlers under `app/api/admin/*`
 - Supabase Postgres for conversation metadata
 - Supabase Storage for screenshots
-- Shared admin password stored in Vercel environment variables
+- Supabase Auth for per-user creator accounts
 
 ## How it works
 
@@ -26,8 +27,11 @@ The project is now oriented around Vercel for hosting and route handlers, plus S
 
 ### Private admin
 
-- `/admin` uses a shared password.
-- `POST /api/admin/login` verifies `ADMIN_PASSWORD` and sets an `HttpOnly` cookie.
+- `/admin` uses Supabase Auth email/password accounts.
+- Each signed-in user can upload screenshots and save their own metadata.
+- Metadata rows are written with `owner_id` and `owner_email`.
+- A user cannot overwrite another user’s post if the slug is already claimed.
+- `/my-posts` shows only the signed-in user’s own published posts and links back to edit them.
 - `POST /api/admin/upload-sign` creates a signed Supabase Storage upload URL.
 - The browser uploads the image directly to Supabase Storage.
 - `POST /api/admin/metadata` upserts the conversation record into Supabase.
@@ -35,19 +39,21 @@ The project is now oriented around Vercel for hosting and route handlers, plus S
 ## Supabase setup
 
 1. Create a Supabase project.
-2. In Supabase SQL editor, run [`supabase/schema.sql`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/supabase/schema.sql).
-3. In Supabase project settings, copy:
+2. In `Authentication -> Providers`, enable `Email`.
+3. Decide whether you want email confirmation:
+   - Enabled: users must confirm their email before they can sign in.
+   - Disabled: sign-up creates an immediate session.
+4. In Supabase SQL editor, run [`supabase/schema.sql`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/supabase/schema.sql).
+5. In Supabase project settings, copy:
    - Project URL
    - anon public key
    - service role key
-4. Keep the `conversation-screenshots` bucket public so the gallery can render images directly.
+6. Keep the `conversation-screenshots` bucket public so the gallery can render images directly.
 
 ## Required environment variables
 
 Set these in Vercel:
 
-- `ADMIN_PASSWORD`
-- `ADMIN_SESSION_SECRET`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -88,12 +94,20 @@ Local notes:
 ## Admin workflow
 
 1. Visit `/admin`.
-2. Enter the shared admin password.
+2. Create an account or sign in with your email and password.
 3. Choose a screenshot file named like `YYYY-MM-DD__optional-title.png`.
 4. Upload the file to Supabase Storage.
 5. Review the auto-filled date/title/slug.
 6. Adjust tags, model, topic, and `promptCrop`.
 7. Save metadata.
+8. Visit `/my-posts` any time to see the posts you own and jump back into editing.
+
+Notes:
+
+- Uploaded files are stored under a user-scoped path: `users/<user-id>/screenshots/...`
+- The gallery remains public.
+- Slugs are still globally unique because the public route remains `/c/[slug]`.
+- If two users want the same slug, one of them must change the title or slug before saving.
 
 ## Metadata format
 
@@ -117,12 +131,11 @@ The gallery accepts both the new `image.url` shape from Supabase and older `imag
 ## Files that matter
 
 - [`app/admin/page.tsx`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/admin/page.tsx)
-- [`app/api/admin/login/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/login/route.ts)
-- [`app/api/admin/logout/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/logout/route.ts)
-- [`app/api/admin/session/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/session/route.ts)
+- [`app/my-posts/page.tsx`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/my-posts/page.tsx)
+- [`app/api/admin/my-posts/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/my-posts/route.ts)
 - [`app/api/admin/upload-sign/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/upload-sign/route.ts)
 - [`app/api/admin/metadata/route.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/app/api/admin/metadata/route.ts)
 - [`lib/content/load.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/lib/content/load.ts)
+- [`lib/supabase/auth.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/lib/supabase/auth.ts)
 - [`lib/supabase/server.ts`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/lib/supabase/server.ts)
 - [`supabase/schema.sql`](/Users/syaz/Documents/work/repos/chatgpt-screenshot-gallery/supabase/schema.sql)
-

@@ -7,9 +7,19 @@ create table if not exists public.conversations (
   topic text,
   image_url text not null,
   prompt_crop jsonb not null default '{"x":0.06,"y":0.58,"w":0.88,"h":0.22}'::jsonb,
+  owner_id uuid references auth.users(id) on delete set null,
+  owner_email text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.conversations
+  add column if not exists owner_id uuid references auth.users(id) on delete set null;
+
+alter table public.conversations
+  add column if not exists owner_email text;
+
+create index if not exists conversations_owner_id_idx on public.conversations (owner_id);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -54,4 +64,3 @@ for all
 to service_role
 using (bucket_id = 'conversation-screenshots')
 with check (bucket_id = 'conversation-screenshots');
-
